@@ -1,28 +1,97 @@
-import type { NextPage } from 'next'
+import type { GetStaticProps, NextPage } from 'next'
 import Head from 'next/head'
-import Link from 'next/link'
-import { Box, Text, Link as ChakraLink, VStack, Code } from '@chakra-ui/react'
+import slugify from 'slugify'
+import {
+  Box,
+  Text,
+  Flex,
+  VStack,
+  Stack,
+  Heading,
+  useColorMode
+} from '@chakra-ui/react'
+import { ChevronRightIcon } from '@chakra-ui/icons'
 
-const Home: NextPage = () => {
+import Link from '@components/elements/Link'
+
+import {
+  getLatestQuizzes,
+  TLatestQuizzes
+} from '@graphql/queries/getLatestQuizzes'
+
+import { SEO } from '@components/common/SEO'
+
+import { TEN_MINUTES_IN_SECONDS } from '@constants/globalConstants'
+
+interface HomePageProps {
+  latestQuizzes: TLatestQuizzes
+}
+
+const HomePage: NextPage<HomePageProps> = ({ latestQuizzes }) => {
+  const { colorMode } = useColorMode()
+
   return (
     <>
-      <Head>
-        <title>Arctiquiz</title>
-      </Head>
-      <Box textAlign="center" fontSize="xl">
-        <VStack spacing={8}>
-          <Text>
-            Arctiquiz! <Code fontSize="xl">Tests and Quizzes</Code>
+      <SEO title="Arctiquiz" description="Quizzes!" />
+
+      <VStack spacing={6} align="start">
+        <Stack>
+          <Heading as="h2" size="lg">
+            Which test you want to do?
+          </Heading>
+          <Text fontSize="lg" fontWeight="medium" color="gray.400">
+            Start by choosing one of the quizzes below
           </Text>
-          <Link href="/submission/1" passHref>
-            <ChakraLink color="teal.500" fontSize="2xl">
-              Go to submission
-            </ChakraLink>
-          </Link>
+        </Stack>
+
+        <VStack as="nav" spacing={6} width="full">
+          {latestQuizzes.map(({ id, title, description, slug }) => (
+            <Link
+              key={id}
+              href={`/quiz/${slug}`}
+              width="full"
+              _hover={{ textDecoration: 'none' }}
+            >
+              <Flex
+                justifyContent="space-between"
+                cursor="pointer"
+                width="full"
+                borderY="1px"
+                borderTopColor={colorMode === 'light' ? 'gray.700' : 'gray.700'}
+                borderBottomColor={
+                  colorMode === 'light' ? 'gray.700' : 'gray.700'
+                }
+                paddingY={4}
+              >
+                <Stack>
+                  <Heading as="h4" size="md" color="purple.400">
+                    {title}
+                  </Heading>
+                  <Text fontSize="md" fontWeight="medium" color="gray.400">
+                    {description}
+                  </Text>
+                </Stack>
+                <Flex alignItems="center">
+                  <ChevronRightIcon width={6} height={6} color="gray.400" />
+                </Flex>
+              </Flex>
+            </Link>
+          ))}
         </VStack>
-      </Box>
+      </VStack>
     </>
   )
 }
 
-export default Home
+export const getStaticProps: GetStaticProps = async () => {
+  const latestQuizzes = await getLatestQuizzes()
+
+  return {
+    props: {
+      latestQuizzes
+    },
+    revalidate: TEN_MINUTES_IN_SECONDS
+  }
+}
+
+export default HomePage
