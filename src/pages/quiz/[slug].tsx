@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { GetStaticPaths, GetStaticProps, NextPage } from 'next'
+import { useRouter } from 'next/router'
 import { Box, Heading, Text, Button } from '@chakra-ui/react'
 
 import { getQuizzesIndex } from '@graphql/queries/getQuizzesIndex'
@@ -14,6 +16,26 @@ interface QuizStartPageProps {
 }
 
 const QuizStartPage: NextPage<QuizStartPageProps> = ({ quizData }) => {
+  const [isLoading, setIsLoading] = useState(false)
+
+  const router = useRouter()
+
+  const handleStartSubmission = async () => {
+    setIsLoading(true)
+
+    const data = await fetch(`/api/submission/start/${quizData.id}`, {
+      method: 'post'
+    })
+
+    const { newSubmissionId } = (await data.json()) as {
+      newSubmissionId: string
+    }
+
+    setIsLoading(false)
+
+    router.push(`/submission/${newSubmissionId}`)
+  }
+
   return (
     <>
       <SEO
@@ -26,9 +48,7 @@ const QuizStartPage: NextPage<QuizStartPageProps> = ({ quizData }) => {
           {quizData.title}
         </Heading>
         <Text color="gray.500" fontSize="lg">
-          Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
-          nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat,
-          sed diam voluptua.
+          {quizData.description}
         </Text>
 
         <Button
@@ -37,6 +57,8 @@ const QuizStartPage: NextPage<QuizStartPageProps> = ({ quizData }) => {
           color="white"
           variant="solid"
           mt={6}
+          isLoading={isLoading}
+          onClick={handleStartSubmission}
         >
           Start
         </Button>
