@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { GetServerSideProps, NextPage } from 'next'
 import {
   Box,
@@ -8,15 +8,20 @@ import {
   Text,
   VStack,
   Checkbox,
-  Button
+  Button,
+  useColorModeValue
 } from '@chakra-ui/react'
+import NProgress from 'nprogress'
 
 import { SEO } from '@components/common/SEO'
 
 import { getSubmissionData } from '@graphql/queries/getSubmissionData'
 import { TQuestion, TSubmission } from '@graphql/schema'
 
-const getQuestion = (questionId: string, questions: [TQuestion]): TQuestion => {
+const getQuestion = (
+  questionId: string | null,
+  questions: [TQuestion]
+): TQuestion => {
   const question = questions.find(({ id }) => id === questionId)
 
   return question ?? questions[0]
@@ -24,6 +29,9 @@ const getQuestion = (questionId: string, questions: [TQuestion]): TQuestion => {
 
 const getCurrentIndex = (questionId: string, questions: [TQuestion]): number =>
   questions.findIndex(({ id }) => id === questionId)
+
+// const isFirstQuestion = !currentQuestionId && !isFinished
+// const questionsRemaining = questions.slice(questions.findIndex(({ id }) => id === currentQuestion.id) + 1, questions.length).length
 
 interface SubmissionPageProps {
   submissionData: TSubmission
@@ -38,10 +46,15 @@ const SubmissionPage: NextPage<SubmissionPageProps> = ({ submissionData }) => {
   )
   const [selectedAnswerId, setSelectedAnswerId] = useState('')
 
-  // const isFirstQuestion = !currentQuestionId && !isFinished
-  // const questionsRemaining = questions.slice(questions.findIndex(({ id }) => id === currentQuestion.id) + 1, questions.length).length
-
   const hasSelectedAnswer = !!selectedAnswerId
+
+  useEffect(() => {
+    const currentPosition = getCurrentIndex(currentQuestion.id, questions) + 1
+    const max = questions.length + 1
+
+    NProgress.configure({ showSpinner: false, trickle: false, minimum: 0.1 })
+    NProgress.set(currentPosition / max)
+  }, [currentQuestion, questions])
 
   const getQuestionIndex = useCallback(() => {
     const question = getCurrentIndex(currentQuestion.id, questions) + 1
@@ -61,12 +74,17 @@ const SubmissionPage: NextPage<SubmissionPageProps> = ({ submissionData }) => {
     setCurrentQuestion(questions[nextQuestion])
   }
 
+  console.log(submissionData)
+
+  const questionColor = useColorModeValue('gray.800', 'gray.300')
+  const checkboxColor = useColorModeValue('gray.500', 'gray.600')
+
   return (
     <>
       <SEO title={`Quiz: ${quiz.title}`} description={quiz.description} />
       <Box>
         <Flex>
-          <Text fontWeight="medium" color="gray.300">
+          <Text fontWeight="medium" color={questionColor}>
             Question {getQuestionIndex()}
           </Text>
           <Text marginLeft={4} fontWeight="bold">
@@ -82,8 +100,10 @@ const SubmissionPage: NextPage<SubmissionPageProps> = ({ submissionData }) => {
                 colorScheme="purple"
                 isChecked={selectedAnswerId === id}
                 onChange={() => handleChangeSelectedAnswerId(id)}
-                border="1px"
-                borderColor="gray.600"
+                border="2px"
+                borderColor={
+                  selectedAnswerId === id ? 'purple.600' : checkboxColor
+                }
                 borderRadius="md"
                 width="full"
                 padding={4}

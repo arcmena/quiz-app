@@ -1,7 +1,8 @@
 export type TSubmission = {
   id: string
-  currentQuestionId: string
+  currentQuestionId: string | null
   isFinished: boolean
+  selectedAnswers: [TAnswers] | null
   quiz: TQuiz
 }
 
