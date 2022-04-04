@@ -9,6 +9,11 @@ export const GET_SUBMISSION_DATA = gql`
       id
       currentQuestionId
       isFinished
+      selectedAnswers {
+        id
+        text
+        isCorrectAnswer
+      }
       quiz {
         title
         description

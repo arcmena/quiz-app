@@ -1,12 +1,45 @@
-import { NextPage } from 'next'
-import { Box, Text } from '@chakra-ui/layout'
+import { GetServerSideProps, NextPage } from 'next'
+import { Box, Heading, Text } from '@chakra-ui/layout'
 
-const QuizResultsPage: NextPage = () => {
+import { getSubmissionData } from '@graphql/queries/getSubmissionData'
+import { TSubmission } from '@graphql/schema'
+
+interface QuizResultsPageProps {
+  submissionData: TSubmission
+}
+
+const QuizResultsPage: NextPage<QuizResultsPageProps> = ({
+  submissionData
+}) => {
+  const { quiz, selectedAnswers } = submissionData
+  const { questions } = quiz
+
+  const correctAnswers = selectedAnswers?.filter(
+    ({ isCorrectAnswer }) => isCorrectAnswer
+  ).length
+
+  const getResults = () => {
+    return `${correctAnswers} of ${questions.length}`
+  }
+
   return (
     <Box textAlign="center" fontSize="xl">
-      <Text>Quiz Results page</Text>
+      <Heading size="xl">Results: {quiz.title}</Heading>
+      <Text>Your score is: {getResults()}</Text>
     </Box>
   )
+}
+
+export const getServerSideProps: GetServerSideProps = async context => {
+  const { submissionId } = context.query as { submissionId: string }
+
+  const submissionData = await getSubmissionData(submissionId)
+
+  return {
+    props: {
+      submissionData
+    }
+  }
 }
 
 export default QuizResultsPage
