@@ -17,6 +17,7 @@ import { SEO } from '@components/common/SEO'
 
 import { getSubmissionData } from '@graphql/queries/getSubmissionData'
 import { TQuestion, TSubmission } from '@graphql/schema'
+import { useRouter } from 'next/router'
 
 const getQuestion = (
   questionId: string | null,
@@ -27,54 +28,100 @@ const getQuestion = (
   return question ?? questions[0]
 }
 
-const getCurrentIndex = (questionId: string, questions: [TQuestion]): number =>
-  questions.findIndex(({ id }) => id === questionId)
-
-// const isFirstQuestion = !currentQuestionId && !isFinished
-// const questionsRemaining = questions.slice(questions.findIndex(({ id }) => id === currentQuestion.id) + 1, questions.length).length
+const getCurrentQuestionIndex = (
+  questionId: string,
+  questions: [TQuestion]
+): number => questions.findIndex(({ id }) => id === questionId)
 
 interface SubmissionPageProps {
   submissionData: TSubmission
 }
 
 const SubmissionPage: NextPage<SubmissionPageProps> = ({ submissionData }) => {
-  const { currentQuestionId, quiz } = submissionData
+  const router = useRouter()
+
+  const {
+    id: submissionId,
+    currentQuestionId,
+    quiz,
+    isFinished
+  } = submissionData
   const { title: quizTitle, questions } = quiz
 
   const [currentQuestion, setCurrentQuestion] = useState<TQuestion>(
     getQuestion(currentQuestionId, questions)
   )
+
   const [selectedAnswerId, setSelectedAnswerId] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const hasSelectedAnswer = !!selectedAnswerId
+  const currentQuestionIndex = getCurrentQuestionIndex(
+    currentQuestion.id,
+    questions
+  )
 
   useEffect(() => {
-    const currentPosition = getCurrentIndex(currentQuestion.id, questions) + 1
-    const max = questions.length + 1
+    if (isFinished) {
+      router.push(`/submission/${submissionId}/results`)
+    }
+  }, [])
 
-    NProgress.configure({ showSpinner: false, trickle: false, minimum: 0.1 })
-    NProgress.set(currentPosition / max)
-  }, [currentQuestion, questions])
+  useEffect(() => {
+    if (!isFinished) {
+      const currentPosition = currentQuestionIndex + 1
+      const max = questions.length + 1
+
+      NProgress.configure({ showSpinner: false, trickle: false, minimum: 0.1 })
+      NProgress.set(currentPosition / max)
+    }
+  }, [currentQuestionIndex, questions])
 
   const getQuestionIndex = useCallback(() => {
-    const question = getCurrentIndex(currentQuestion.id, questions) + 1
+    const question = currentQuestionIndex + 1
 
     return `${question} of ${questions.length}`
-  }, [currentQuestion.id, questions])
+  }, [currentQuestionIndex, questions.length])
 
   const handleChangeSelectedAnswerId = useCallback(
     id => setSelectedAnswerId(id),
     []
   )
 
-  const handleNextQuestion = () => {
-    const nextQuestion = getCurrentIndex(currentQuestion.id, questions) + 1
+  const handleNextQuestion = async () => {
+    setIsLoading(true)
 
-    setSelectedAnswerId('')
-    setCurrentQuestion(questions[nextQuestion])
+    try {
+      const nextQuestion = questions[currentQuestionIndex + 1]
+
+      const body = JSON.stringify({
+        nextQuestionId: nextQuestion?.id,
+        isFinished: !nextQuestion,
+        selectedAnswerId
+      })
+
+      await fetch(`/api/submission/update/${submissionId}`, {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body
+      })
+
+      if (nextQuestion) {
+        setSelectedAnswerId('')
+        setCurrentQuestion(nextQuestion)
+        setIsLoading(false)
+        return
+      }
+
+      NProgress.done()
+      router.push(`/submission/${submissionId}/results`)
+    } catch (error) {
+      setIsLoading(false)
+      console.error(error)
+    }
   }
-
-  console.log(submissionData)
 
   const questionColor = useColorModeValue('gray.800', 'gray.300')
   const checkboxColor = useColorModeValue('gray.500', 'gray.600')
@@ -82,6 +129,7 @@ const SubmissionPage: NextPage<SubmissionPageProps> = ({ submissionData }) => {
   return (
     <>
       <SEO title={`Quiz: ${quiz.title}`} description={quiz.description} />
+
       <Box>
         <Flex>
           <Text fontWeight="medium" color={questionColor}>
@@ -107,6 +155,7 @@ const SubmissionPage: NextPage<SubmissionPageProps> = ({ submissionData }) => {
                 borderRadius="md"
                 width="full"
                 padding={4}
+                disabled={isLoading}
               >
                 {text}
               </Checkbox>
@@ -120,8 +169,9 @@ const SubmissionPage: NextPage<SubmissionPageProps> = ({ submissionData }) => {
             bgGradient="linear(to-r, purple.400, purple.500, purple.600)"
             color="white"
             variant="solid"
-            disabled={!hasSelectedAnswer}
+            disabled={!hasSelectedAnswer || isLoading}
             onClick={handleNextQuestion}
+            isLoading={isLoading}
           >
             Next question
           </Button>
