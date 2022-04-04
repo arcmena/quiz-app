@@ -1,3 +1,10 @@
+export type TSubmission = {
+  id: string
+  currentQuestionId: string
+  isFinished: boolean
+  quiz: TQuiz
+}
+
 export type TQuiz = {
   id: string
   createdAt: string

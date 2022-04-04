@@ -1,6 +1,4 @@
 import type { GetStaticProps, NextPage } from 'next'
-import Head from 'next/head'
-import slugify from 'slugify'
 import {
   Box,
   Text,
