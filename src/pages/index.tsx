@@ -6,18 +6,17 @@ import {
   VStack,
   Stack,
   Heading,
-  useColorMode
+  useColorModeValue
 } from '@chakra-ui/react'
 import { ChevronRightIcon } from '@chakra-ui/icons'
 
 import Link from '@components/elements/Link'
+import { SEO } from '@components/common/SEO'
 
 import {
   getLatestQuizzes,
   TLatestQuizzes
 } from '@graphql/queries/getLatestQuizzes'
-
-import { SEO } from '@components/common/SEO'
 
 import { TEN_MINUTES_IN_SECONDS } from '@constants/globalConstants'
 
@@ -26,7 +25,9 @@ interface HomePageProps {
 }
 
 const HomePage: NextPage<HomePageProps> = ({ latestQuizzes }) => {
-  const { colorMode } = useColorMode()
+  const borderColor = useColorModeValue('gray.500', 'gray.600')
+  const secondaryColor = useColorModeValue('gray.800', 'gray.300')
+  const headingColor = useColorModeValue('purple.600', 'purple.500')
 
   return (
     <>
@@ -37,7 +38,7 @@ const HomePage: NextPage<HomePageProps> = ({ latestQuizzes }) => {
           <Heading as="h2" size="lg">
             Which test you want to do?
           </Heading>
-          <Text fontSize="lg" fontWeight="medium" color="gray.400">
+          <Text fontSize="lg" fontWeight="medium" color={secondaryColor}>
             Start by choosing one of the quizzes below
           </Text>
         </Stack>
@@ -54,23 +55,21 @@ const HomePage: NextPage<HomePageProps> = ({ latestQuizzes }) => {
                 justifyContent="space-between"
                 cursor="pointer"
                 width="full"
-                borderY="1px"
-                borderTopColor={colorMode === 'light' ? 'gray.700' : 'gray.700'}
-                borderBottomColor={
-                  colorMode === 'light' ? 'gray.700' : 'gray.700'
-                }
-                paddingY={4}
+                border="2px"
+                borderColor={borderColor}
+                borderRadius="md"
+                padding={4}
               >
-                <Stack>
-                  <Heading as="h4" size="md" color="purple.400">
+                <Stack spacing={2}>
+                  <Heading as="h4" size="md" color={headingColor}>
                     {title}
                   </Heading>
-                  <Text fontSize="md" fontWeight="medium" color="gray.400">
+                  <Text fontSize="md" color={secondaryColor}>
                     {description}
                   </Text>
                 </Stack>
                 <Flex alignItems="center">
-                  <ChevronRightIcon width={6} height={6} color="gray.400" />
+                  <ChevronRightIcon width={6} height={6} color={borderColor} />
                 </Flex>
               </Flex>
             </Link>

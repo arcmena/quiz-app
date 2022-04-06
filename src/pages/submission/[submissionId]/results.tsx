@@ -1,6 +1,8 @@
 import { GetServerSideProps, NextPage } from 'next'
 import { Box, Heading, Text } from '@chakra-ui/layout'
 
+import { SEO } from '@components/common/SEO'
+
 import { getSubmissionData } from '@graphql/queries/getSubmissionData'
 import { TSubmission } from '@graphql/schema'
 
@@ -23,10 +25,17 @@ const QuizResultsPage: NextPage<QuizResultsPageProps> = ({
   }
 
   return (
-    <Box textAlign="center" fontSize="xl">
-      <Heading size="xl">Results: {quiz.title}</Heading>
-      <Text>Your score is: {getResults()}</Text>
-    </Box>
+    <>
+      <SEO
+        title={`Results: ${quiz.title}`}
+        description={`Results: ${quiz.title}`}
+      />
+
+      <Box textAlign="center" fontSize="xl">
+        <Heading size="xl">Results: {quiz.title}</Heading>
+        <Text>Your score is: {getResults()}</Text>
+      </Box>
+    </>
   )
 }
 
