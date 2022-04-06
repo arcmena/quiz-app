@@ -11,6 +11,9 @@ export const GET_QUIZ_DATA = gql`
       title
       description
       slug
+      questions {
+        id
+      }
     }
   }
 `
