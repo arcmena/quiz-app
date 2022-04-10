@@ -39,17 +39,20 @@ const QuizStartPage: NextPage<QuizStartPageProps> = ({ quizData }) => {
   const handleStartSubmission = async () => {
     setIsLoading(true)
 
-    const data = await fetch(`/api/submission/start/${quizId}`, {
-      method: 'post'
-    }).then(data => data.json())
-
-    const { newSubmissionId } = data as {
-      newSubmissionId: string
+    try {
+      const data = await fetch(`/api/submission/start/${quizId}`, {
+        method: 'post'
+      }).then(data => data.json())
+  
+      const { newSubmissionId } = data as {
+        newSubmissionId: string
+      }
+    
+      router.push(`/submission/${newSubmissionId}`)
+    } catch (error) {
+      setIsLoading(false)
+      console.error(error)
     }
-
-    setIsLoading(false)
-
-    router.push(`/submission/${newSubmissionId}`)
   }
 
   const quizInfoColor = useColorModeValue('gray.800', 'gray.300')
