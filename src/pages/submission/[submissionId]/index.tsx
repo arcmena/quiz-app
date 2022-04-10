@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useCallback, useEffect, useState } from 'react'
 import { GetServerSideProps, NextPage } from 'next'
+import { useRouter } from 'next/router'
 import {
   Box,
   Flex,
@@ -18,7 +19,6 @@ import { SEO } from '@components/common/SEO'
 
 import { getSubmissionData } from '@graphql/queries/getSubmissionData'
 import { TQuestion, TSubmission } from '@graphql/schema'
-import { useRouter } from 'next/router'
 
 const getQuestion = (
   questionId: string | null,
@@ -45,7 +45,6 @@ const SubmissionPage: NextPage<SubmissionPageProps> = ({ submissionData }) => {
     id: submissionId,
     currentQuestionId,
     quiz,
-    isFinished
   } = submissionData
   const { title: quizTitle, questions } = quiz
 
@@ -63,19 +62,11 @@ const SubmissionPage: NextPage<SubmissionPageProps> = ({ submissionData }) => {
   )
 
   useEffect(() => {
-    if (isFinished) {
-      router.push(`/submission/${submissionId}/results`)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!isFinished) {
       const currentPosition = currentQuestionIndex + 1
       const max = questions.length + 1
 
       NProgress.configure({ showSpinner: false, trickle: false, minimum: 0.1 })
       NProgress.set(currentPosition / max)
-    }
   }, [currentQuestionIndex, questions])
 
   const getQuestionIndex = useCallback(() => {
@@ -186,6 +177,16 @@ export const getServerSideProps: GetServerSideProps = async context => {
   const { submissionId } = context.query as { submissionId: string }
 
   const submissionData = await getSubmissionData(submissionId)
+
+  if (submissionData.isFinished) {
+    return {
+      props: {},
+      redirect: {
+        destination: `/submission/${submissionId}/results`,
+        permanent: false
+      }
+    }
+  }
 
   return {
     props: {
